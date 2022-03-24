@@ -17,7 +17,7 @@ public class MenuItem {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id")
     private Long id;
-    @Column(name="name",unique = true)
+    @Column(name="name")
     @NotNull
     private String name;
     @Column(name="description")
@@ -31,6 +31,15 @@ public class MenuItem {
     private Double price;
     @Column(name="is_deleted",columnDefinition = "boolean default false")
     private Boolean isDeleted;
+
+    public MenuItem(String name, String description, String image, String note, Double price) {
+        this.name = name;
+        this.description = description;
+        this.image = image;
+        this.note = note;
+        this.price = price;
+        this.isDeleted=false;
+    }
 
     @Override
     public String toString() {
