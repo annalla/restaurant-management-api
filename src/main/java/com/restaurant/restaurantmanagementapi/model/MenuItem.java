@@ -4,7 +4,6 @@ import com.sun.istack.NotNull;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -53,10 +52,4 @@ public class MenuItem {
                 ", isDeleted=" + isDeleted +
                 '}';
     }
-    //    @ManyToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name="menu_type_2_id", nullable=false)
-//    private MenuTypeLevel2 menuTypeLevel2;
-//    @OneToMany( fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//    private Set<MenuTypeLevel2> menuTypes;
-
 }
