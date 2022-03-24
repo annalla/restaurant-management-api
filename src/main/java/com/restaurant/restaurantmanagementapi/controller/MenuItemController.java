@@ -8,6 +8,7 @@ import com.restaurant.restaurantmanagementapi.utils.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -61,5 +62,9 @@ public class MenuItemController {
         System.out.println(menuItemRepository.findByName(name).isPresent());
         System.out.println(menuItemRepository.findByName(name));
         return menuItemRepository.findByName(name).isPresent();
+    }
+    @GetMapping("/search")
+    public List<MenuItem> searchMenuItems(@Param("keyword") String keyword, Pageable pageable){
+        return menuItemRepository.search(keyword,pageable).getContent();
     }
 }

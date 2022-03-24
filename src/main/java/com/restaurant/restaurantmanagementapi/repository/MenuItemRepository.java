@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MenuItemRepository extends JpaRepository<MenuItem,Long> {
-    @Query(value = "SELECT * FROM menu_item where is_deleted=false", nativeQuery = true)
+    @Query(value = "SELECT * FROM menu_item m where m.is_deleted=false", nativeQuery = true)
     @Override
     Page<MenuItem> findAll(Pageable pageable);
     @Query(value = "SELECT * FROM menu_item m where m.is_deleted=false and m.id=:id ", nativeQuery = true)
@@ -21,5 +21,9 @@ public interface MenuItemRepository extends JpaRepository<MenuItem,Long> {
     Optional<MenuItem> findByName(@Param("name") String name);
     @Query(value = "SELECT * FROM menu_item m where m.is_deleted=false and m.name=:name ", nativeQuery = true)
     MenuItem findByNameItem(@Param("name") String name);
+    @Query(value = "SELECT * FROM menu_item m where m.is_deleted=false and (m.name LIKE %:keyword% or m.description LIKE %:keyword%) ",
+            countQuery= "SELECT count(*) FROM menu_item m where m.is_deleted=false and (m.name LIKE %:keyword% or m.description LIKE %:keyword%) ",
+            nativeQuery = true)
+    Page<MenuItem> search(@Param("keyword")String keyword,Pageable pageable);
 
 }
