@@ -9,20 +9,21 @@ import javax.persistence.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "ordered_detail")
 public class OrderedDetail {
-    @EmbeddedId
-    OrderedDetailKey id;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @Column(name="id")
+    private Long id;
 
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    @MapsId("billId")
     @JoinColumn(name="bill_id", nullable=false)
     private Bill bill;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    @MapsId("menuItemId")
     @JoinColumn(name="menu_item_id", nullable=false)
     private MenuItem menuItem;
 

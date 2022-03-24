@@ -1,5 +1,6 @@
 package com.restaurant.restaurantmanagementapi.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "bill")
 public class Bill {
@@ -22,8 +24,5 @@ public class Bill {
     private LocalDateTime orderedTime;
     @Column(name="total")
     private Double total;
-    @OneToMany
-    private Set<OrderedDetail> orderedDetails;
-
 
 }
