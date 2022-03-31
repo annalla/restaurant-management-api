@@ -21,9 +21,6 @@ public class DatabaseConfiguration {
 
     @PostConstruct
     void initDatabase() {
-        System.out.println("here");
-        System.out.println(repository.findAll());
-        System.out.println(repository.findAll().isEmpty());
         if (repository.findAll().isEmpty()) {
             log.info("Preloading " + repository.save(new MenuItem("Bread", "bread,egg", "bread.img", "", 2.1)));
             log.info("Preloading " + repository.save(new MenuItem("Rice", "rice,fish", "rice.img", "", 4.1)));

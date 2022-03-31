@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -30,17 +31,32 @@ public class Bill {
     @OneToMany(mappedBy="bill",cascade=CascadeType.ALL)
     private final Set<BillItem> billItems=new HashSet<>();
 
-    // No setter, only a getter which returns an immutable collection
     public Set<BillItem> getBillItems() {
         return Collections.unmodifiableSet(this.billItems);
     }
+
+    /***
+     * add bill item into bill, if bill item existed, quantity will be oldQuantity + newQuantity
+     *
+     * @param billItem BillItem need to add
+     * @see BillItem
+     */
     public void addBillItem(BillItem billItem) {
-        billItem.setBill(this);
-        this.billItems.add(billItem);
+        BillItem item=getExistedBillItem(billItem);
+        if(item==null){
+            billItem.setBill(this);
+            this.billItems.add(billItem);
+        }
+        else{
+            item.setQuantity(billItem.getQuantity()+item.getQuantity());
+        }
     }
-    public void removeBillItem(BillItem billItem) {
-        this.billItems.remove(billItem);
+
+    private BillItem getExistedBillItem(BillItem billItem) {
+       List<BillItem> items= billItems.stream().filter(billItem1 -> billItem1.getMenuItemId()==billItem.getMenuItemId()).collect(Collectors.toList());
+       return items.size()==0?null:items.get(0);
     }
+
     public void clearAllBillItem() {
         this.billItems.clear();
     }

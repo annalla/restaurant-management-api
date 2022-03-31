@@ -9,6 +9,7 @@ import com.restaurant.restaurantmanagementapi.model.Bill;
 import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.service.BillService;
 import com.restaurant.restaurantmanagementapi.utils.Message;
+import com.restaurant.restaurantmanagementapi.utils.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +17,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/bill")
+@RequestMapping(path = Path.BILL)
 public class BillController<todo> {
     @Autowired
     BillService billService;
 
-    @GetMapping("/{id}")
+    @GetMapping(Path.ID)
     BillResponse getBillById(@PathVariable Long id) {
         BillResponse billResponse = billService.getById(id);
         if (billResponse == null) {
@@ -30,12 +31,12 @@ public class BillController<todo> {
         return billResponse;
     }
 
-    @GetMapping("")
+    @GetMapping()
     List<BillResponse> getBillById(Pageable pageable) {
         return billService.getAll(pageable);
     }
 
-    @PostMapping("")
+    @PostMapping()
     BillResponse addBill(@RequestBody List<BillItemRequest> billItemRequests) {
         String message = billService.checkBillItem(billItemRequests);
         if (!message.equals(Message.OK)) {
@@ -44,7 +45,7 @@ public class BillController<todo> {
         return billService.add(billItemRequests);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(Path.ID)
     BillResponse addBill(@RequestBody List<BillItemRequest> billItemRequests, @PathVariable Long id) {
         String message = billService.checkBillItem(billItemRequests);
         if (!message.equals(Message.OK)) {
@@ -58,7 +59,7 @@ public class BillController<todo> {
         return updatedBill;
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(Path.ID)
     public boolean deleteBill(@PathVariable Long id) {
         if (!billService.delete(id)) {
             throw new NotFoundException(id);
@@ -66,7 +67,7 @@ public class BillController<todo> {
         return true;
     }
 
-    @PostMapping("/{id}/bill-item")
+    @PostMapping(Path.BILL_ITEM)
     public BillResponse addBillItem(@PathVariable Long id, @RequestBody List<BillItemRequest> billItemRequest) {
         String message = billService.checkBillItem(billItemRequest);
         if (!message.equals(Message.OK)) {
@@ -78,7 +79,7 @@ public class BillController<todo> {
         }
         return updatedBill;
     }
-    @DeleteMapping("/{id}/bill-item")
+    @DeleteMapping(Path.BILL_ITEM)
     public BillResponse deleteBillItem(@PathVariable Long id, @RequestBody List<BillItemDeleteRequest> billItems) {
         String message = billService.checkBillItemId(billItems);
         if (!message.equals(Message.OK)) {
