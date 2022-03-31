@@ -1,12 +1,13 @@
 package com.restaurant.restaurantmanagementapi.controller;
 
+import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
 import com.restaurant.restaurantmanagementapi.model.MenuItem;
 import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
-import com.restaurant.restaurantmanagementapi.utils.BadRequestException;
+import com.restaurant.restaurantmanagementapi.exception.BadRequestException;
+import com.restaurant.restaurantmanagementapi.service.MenuItemService;
 import com.restaurant.restaurantmanagementapi.utils.Message;
-import com.restaurant.restaurantmanagementapi.utils.NotFoundException;
+import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
@@ -17,54 +18,53 @@ import java.util.List;
 @RequestMapping(path = "/menu-item")
 public class MenuItemController {
     @Autowired
-    MenuItemRepository menuItemRepository;
-
+    private MenuItemService menuItemService;
     @GetMapping("/{id}")
-    public MenuItem getMenuItemById(@PathVariable("id") Long id) {
-        return menuItemRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(id));
+    public MenuItemResponse getMenuItemById(@PathVariable("id") Long id) {
+        MenuItemResponse menuItemResponse=menuItemService.getById(id);
+        if(menuItemResponse==null){
+            throw new NotFoundException(id);
+        }
+        return menuItemResponse;
     }
     @GetMapping("")
-    public List<MenuItem> getMenuItems(Pageable pageable) {
-        return menuItemRepository.findAll(pageable).getContent();
+    public List<MenuItemResponse> getMenuItems(Pageable pageable) {
+        return menuItemService.getAll(pageable);
     }
     @PostMapping("")
-    MenuItem addMenuItem(@RequestBody MenuItem newMenuItem) {
-        if(checkExistedName(newMenuItem.getName())){
-            throw new BadRequestException(Message.EXISTED_NAME);
+    public MenuItemResponse addMenuItem(@RequestBody MenuItem newMenuItem) {
+        String message=menuItemService.check(newMenuItem);
+        if(!message.equals(Message.OK)){
+            throw new BadRequestException(message);
         }
-        newMenuItem.setIsDeleted(false);
-        return menuItemRepository.save(newMenuItem);
+        return menuItemService.add(newMenuItem);
     }
     @PutMapping("/{id}")
-    MenuItem updateMenuItem(@RequestBody MenuItem newMenuItem, @PathVariable Long id) {
-        menuItemRepository.findById(id).map(existedMenuItem -> {
-            if(!checkExistedName(newMenuItem.getName())){
-                existedMenuItem.setName(newMenuItem.getName());
-            }
-            existedMenuItem.setDescription(newMenuItem.getDescription());
-            existedMenuItem.setImage(newMenuItem.getImage());
-            existedMenuItem.setPrice(newMenuItem.getPrice());
-            return menuItemRepository.save(existedMenuItem);
-        }).orElseThrow(() -> new NotFoundException(id));
-        return menuItemRepository.findById(id).get();
+    public MenuItemResponse updateMenuItem(@RequestBody MenuItem newMenuItem, @PathVariable Long id) {
+        String message=menuItemService.check(newMenuItem);
+        if(message.equals(Message.EXISTED_NAME)){
+            throw new BadRequestException(Message.EXISTED_NAME);
+        }
+        MenuItemResponse updatedMenuItem=menuItemService.update(newMenuItem,id);
+        if (updatedMenuItem==null){
+           throw new NotFoundException(id);
+        };
+        return updatedMenuItem;
     }
     @DeleteMapping("/{id}")
-    boolean deleteMenuItem(@PathVariable Long id) {
-        menuItemRepository.findById(id).map(existedMenuItem -> {
-            existedMenuItem.setIsDeleted(true);
-            menuItemRepository.save(existedMenuItem);
-            return true;
-        }).orElseThrow(() -> new NotFoundException(id));
+    public boolean deleteMenuItem(@PathVariable Long id) {
+        String message=menuItemService.delete(id);
+        if(message.equals(Message.NOT_FOUND)){
+            throw new NotFoundException(id);
+        }
+        if(message.equals(Message.CAN_NOT_DELETE)){
+            throw new BadRequestException(message);
+        }
         return true;
     }
-    private boolean checkExistedName(String name){
-        System.out.println(menuItemRepository.findByName(name).isPresent());
-        System.out.println(menuItemRepository.findByName(name));
-        return menuItemRepository.findByName(name).isPresent();
-    }
+
     @GetMapping("/search")
-    public List<MenuItem> searchMenuItems(@Param("keyword") String keyword, Pageable pageable){
-        return menuItemRepository.search(keyword,pageable).getContent();
+    public List<MenuItemResponse> searchMenuItems(@Param("keyword") String keyword, Pageable pageable){
+        return menuItemService.search(keyword,pageable);
     }
 }

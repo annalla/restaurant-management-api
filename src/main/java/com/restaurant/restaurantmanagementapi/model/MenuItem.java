@@ -28,8 +28,8 @@ public class MenuItem {
     @NotNull
     @Column(name="price")
     private Double price;
-    @Column(name="is_deleted",columnDefinition = "boolean default false")
-    private Boolean isDeleted;
+    @Column(name="status",columnDefinition = "boolean default true")
+    private Boolean status;
 
     public MenuItem(String name, String description, String image, String note, Double price) {
         this.name = name;
@@ -37,7 +37,7 @@ public class MenuItem {
         this.image = image;
         this.note = note;
         this.price = price;
-        this.isDeleted=false;
+        this.status=true;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class MenuItem {
                 ", image='" + image + '\'' +
                 ", note='" + note + '\'' +
                 ", price=" + price +
-                ", isDeleted=" + isDeleted +
+                ", isDeleted=" + status +
                 '}';
     }
 }
