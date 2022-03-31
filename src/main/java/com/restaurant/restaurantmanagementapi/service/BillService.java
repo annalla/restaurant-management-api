@@ -13,6 +13,7 @@ import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
 import com.restaurant.restaurantmanagementapi.utils.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

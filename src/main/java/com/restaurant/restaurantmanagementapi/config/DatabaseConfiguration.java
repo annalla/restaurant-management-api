@@ -9,19 +9,18 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 
 /**
  * The DatabaseConfiguration class initialize data for menu items if there is no data.
  */
-@Configuration
-@Component
+
 public class DatabaseConfiguration {
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfiguration.class);
     @Autowired
     MenuItemRepository repository;
-
     @PostConstruct
     void initDatabase() {
         if (repository.findAll().isEmpty()) {
