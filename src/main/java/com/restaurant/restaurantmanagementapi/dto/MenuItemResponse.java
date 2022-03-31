@@ -6,7 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-
+/**
+ * The MenuItemResponse wraps fields including id (type : Long), name (type : String), description (type : String), image (type : String), note (type : String)
+ * and price (type : Double) and quantity (type : Integer), status (type : Status)
+ *
+ * @see Status
+ */
 @Getter
 @Setter
 @AllArgsConstructor

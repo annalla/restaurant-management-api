@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * The BillItemResponse wraps fields including id (type : Long), name (type : String), price (type : Double) and quantity (type : Integer)
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

@@ -8,6 +8,10 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * The BillResponse class wraps fields including id (type : Long), orderedTime (type : LocaleDateTime), total (type: Double)
+ * and billItems(type : List<BillItemResponse>).
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

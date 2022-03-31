@@ -5,6 +5,9 @@ import lombok.*;
 
 import javax.persistence.*;
 
+/**
+ * The MenuItem class wraps information of menu item including id,name, description, image, note and price
+ */
 @Getter
 @Setter
 @NoArgsConstructor

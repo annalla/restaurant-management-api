@@ -11,15 +11,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Bill Mapper: transform from Bill to BillResponse
+ * The BillMapper class contains method transform from Bill to BillResponse
  *
+ * @see Bill
+ * @see BillResponse
  */
 public class BillMapper {
-    public static BillResponse toBillResponse(Bill bill){
-        BillResponse billResponse=new BillResponse(bill.getId(),bill.getOrderedTime(),bill.getTotal());
-        if(bill.getBillItems()!=null){
-            List<BillItemResponse> billItemResponses=bill.getBillItems().stream().map(billItem -> {
-                return new BillItemResponse(billItem.getId(),billItem.getMenuItem().getName(),billItem.getPrice(),billItem.getQuantity());
+    public static BillResponse toBillResponse(Bill bill) {
+        BillResponse billResponse = new BillResponse(bill.getId(), bill.getOrderedTime(), bill.getTotal());
+        if (bill.getBillItems() != null) {
+            List<BillItemResponse> billItemResponses = bill.getBillItems().stream().map(billItem -> {
+                return new BillItemResponse(billItem.getId(), billItem.getMenuItem().getName(), billItem.getPrice(), billItem.getQuantity());
             }).collect(Collectors.toList());
             billResponse.setBillItems(billItemResponses);
         }

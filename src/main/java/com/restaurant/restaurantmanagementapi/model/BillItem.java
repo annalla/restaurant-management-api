@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
+/**
+ * The BillItem class wraps information of bill item including id, billId, bill, menuItemId, menuItem
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -25,11 +28,11 @@ public class BillItem {
     private Long menuItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bill_id", referencedColumnName = "id",insertable = false, updatable = false,nullable = false)
+    @JoinColumn(name = "bill_id", referencedColumnName = "id", insertable = false, updatable = false, nullable = false)
     private Bill bill;
 
     @ManyToOne()
-    @JoinColumn(name = "menu_item_id", referencedColumnName = "id",insertable = false, updatable = false,nullable = false)
+    @JoinColumn(name = "menu_item_id", referencedColumnName = "id", insertable = false, updatable = false, nullable = false)
     private MenuItem menuItem;
 
     @Column(name = "quantity")

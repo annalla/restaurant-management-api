@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+/**
+ * The DatabaseConfiguration class initialize data for menu items if there is no data.
+ */
 @Configuration
 @Component
 public class DatabaseConfiguration {
