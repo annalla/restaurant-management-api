@@ -31,7 +31,7 @@ $ mvn package
 Execute the project with file jar, make sure database connection is available:
 
   ```sh
- $ java -jar target/restaurant-management-api-1.0-SNAPSHOT.jar
+ $ java -jar target/restaurant-management-api-0.0.1-SNAPSHOT.jar
   ```
 
 ## Authors
