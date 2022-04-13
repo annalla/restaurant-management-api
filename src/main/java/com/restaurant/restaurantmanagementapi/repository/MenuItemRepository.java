@@ -29,8 +29,8 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     @Query(value = "SELECT * FROM menu_item m where m.status=true and m.name=:name ", nativeQuery = true)
     MenuItem findByNameItem(@Param("name") String name);
 
-    @Query(value = "SELECT * FROM menu_item m where m.status=true and (m.name LIKE %:keyword% or m.description LIKE %:keyword%) ",
-            countQuery = "SELECT count(*) FROM menu_item m where m.is_deleted=false and (m.name LIKE %:keyword% or m.description LIKE %:keyword%) ",
+    @Query(value = "SELECT * FROM menu_item m where m.status=true and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
+            countQuery = "SELECT count(*) FROM menu_item m where m.is_deleted=false and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
             nativeQuery = true)
     Page<MenuItem> search(@Param("keyword") String keyword, Pageable pageable);
 

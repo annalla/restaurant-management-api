@@ -53,6 +53,15 @@ public class Bill {
             item.setQuantity(billItem.getQuantity() + item.getQuantity());
         }
     }
+    public void updateBillItem(BillItem billItem) {
+        BillItem item = getExistedBillItem(billItem);
+        if (item == null) {
+            billItem.setBill(this);
+            this.billItems.add(billItem);
+        } else {
+            item.setQuantity(billItem.getQuantity());
+        }
+    }
 
     /**
      * Get existed BillItem in list of BillItem.

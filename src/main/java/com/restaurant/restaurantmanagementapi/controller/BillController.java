@@ -1,13 +1,10 @@
 package com.restaurant.restaurantmanagementapi.controller;
 
-import com.restaurant.restaurantmanagementapi.dto.BillItemDeleteRequest;
-import com.restaurant.restaurantmanagementapi.dto.BillItemRequest;
-import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
+import com.restaurant.restaurantmanagementapi.dto.*;
 import com.restaurant.restaurantmanagementapi.exception.BadRequestException;
 import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
 import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
 import com.restaurant.restaurantmanagementapi.model.Bill;
-import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.service.BillService;
 import com.restaurant.restaurantmanagementapi.utils.Message;
 import com.restaurant.restaurantmanagementapi.utils.Path;
@@ -125,6 +122,29 @@ public class BillController {
             throw new BadRequestException(message);
         }
         BillResponse updatedBill = billService.addBillItem(id, billItemRequest);
+        if (updatedBill == null) {
+            throw new NotFoundException(id);
+        }
+        return updatedBill;
+    }
+    /**
+     * Update list of bill items in existed bill. The result is  BillResponse object if success,
+     * otherwise throws BadRequestException when billItemsRequest is not valid or
+     * NotFoundException when id not exist
+     *
+     * @param id              id of bill
+     * @param billItemRequest List of BillItemUpdateRequest
+     * @return BillResponse object if success
+     * @throws BadRequestException when billItemsRequest is not valid
+     * @throws NotFoundException   when id not exist
+     */
+    @PutMapping(Path.BILL_ITEM)
+    public BillResponse updateBillItem(@PathVariable Long id, @RequestBody List<BillItemUpdateRequest> billItemRequest) throws RestaurantException  {
+        String message = billService.checkUpdateBillItemId(billItemRequest);
+        if (!message.equals(Message.OK)) {
+            throw new BadRequestException(message);
+        }
+        BillResponse updatedBill = billService.updateBillItem(id, billItemRequest);
         if (updatedBill == null) {
             throw new NotFoundException(id);
         }

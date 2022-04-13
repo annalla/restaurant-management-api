@@ -1,6 +1,7 @@
 package com.restaurant.restaurantmanagementapi.service;
 
 import com.restaurant.restaurantmanagementapi.dto.BillItemDeleteRequest;
+import com.restaurant.restaurantmanagementapi.dto.BillItemUpdateRequest;
 import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.dto.BillItemRequest;
 import com.restaurant.restaurantmanagementapi.mapper.BillMapper;
@@ -72,13 +73,38 @@ public class BillService {
      *
      * @param billItemIds list of BillItemDeleteRequest
      * @return String Message.OK if valid,
-     * Message.NOT_EXISTED_MENU_ITEM if menu item id not exist,
-     * Message.MISSING_FIELD when item miss menuItemId or quantity field,
+     * Message.NOT_EXISTED_MENU_ITEM if bill item id not exist,
+     * Message.MISSING_FIELD when item miss billItemId,
      */
     public String checkBillItemId(List<BillItemDeleteRequest> billItemIds) {
         for (BillItemDeleteRequest billItem : billItemIds) {
             if (billItem.getId() == null) {
                 return Message.MISSING_FIELD;
+            }
+            Optional<BillItem> menuItem = billItemRepository.findById(billItem.getId());
+            if (menuItem.isEmpty()) {
+                return String.format(Message.NOT_EXISTED_BILL_ITEM, billItem.getId());
+            }
+        }
+        return Message.OK;
+    }
+    /**
+     * Check list of BillItemUpdateRequest is valid or not. The result is String Message.OK if valid, Message.NOT_EXISTED_MENU_ITEM if menu item id not exist,
+     * Message.MISSING_FIELD when item miss id or quantity
+     *
+     * @param billItemIds list of BillItemDeleteRequest
+     * @return String Message.OK if valid,
+     * Message.NOT_EXISTED_MENU_ITEM if menu item id not exist,
+     * Message.MISSING_FIELD when item miss billItemId or quantity field,
+     * Message.NEGATIVE_QUANTITY when quantity is negative
+     */
+    public String checkUpdateBillItemId(List<BillItemUpdateRequest> billItemIds) {
+        for (BillItemUpdateRequest billItem : billItemIds) {
+            if (billItem.getId() == null||billItem.getQuantity()==null) {
+                return Message.MISSING_FIELD;
+            }
+            if (billItem.getQuantity() < 0) {
+                return Message.NEGATIVE_QUANTITY;
             }
             Optional<BillItem> menuItem = billItemRepository.findById(billItem.getId());
             if (menuItem.isEmpty()) {
@@ -196,6 +222,25 @@ public class BillService {
                 Optional<MenuItem> menuItem = menuItemService.findMenuItemById(billItem.getMenuItemId());
                 BillItem newBillItem = new BillItem(billId, billItem.getMenuItemId(), menuItem.get(), billItem.getQuantity(), menuItem.get().getPrice());
                 bill.addBillItem(newBillItem);
+            }
+            double total = calculateTotalBill(billId);
+            bill.setTotal(Math.round(total * 100) / 100.0);
+            return (BillResponse) billMapper.entityToDTO(billRepository.save(bill));
+        }).orElse(null);
+    }
+    /**
+     * Update list of bill item into existed bill. The result is BillResponse if success, null if billId not exist
+     *
+     * @param billId          id of bill
+     * @param  billItemUpdateRequest list of  billItemUpdateRequest
+     * @return BillResponse if success, null if billId not exist
+     */
+    public BillResponse updateBillItem(Long billId, List<BillItemUpdateRequest> billItemUpdateRequest) {
+        return billRepository.findById(billId).map(bill -> {
+            for (BillItemUpdateRequest billItem : billItemUpdateRequest) {
+                Optional<BillItem> billItem1=billItemRepository.findById(billItem.getId());
+                billItem1.get().setQuantity(billItem.getQuantity());
+                bill.updateBillItem(billItem1.get());
             }
             double total = calculateTotalBill(billId);
             bill.setTotal(Math.round(total * 100) / 100.0);
