@@ -1,6 +1,7 @@
 package com.restaurant.restaurantmanagementapi.controller;
 
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
+import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
 import com.restaurant.restaurantmanagementapi.model.MenuItem;
 import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
 import com.restaurant.restaurantmanagementapi.exception.BadRequestException;
@@ -32,7 +33,7 @@ public class MenuItemController {
      * @throws NotFoundException when id not exist
      */
     @GetMapping(Path.ID)
-    public MenuItemResponse getMenuItemById(@PathVariable("id") Long id) {
+    public MenuItemResponse getMenuItemById(@PathVariable("id") Long id) throws RestaurantException {
         MenuItemResponse menuItemResponse = menuItemService.getById(id);
         if (menuItemResponse == null) {
             throw new NotFoundException(id);
@@ -59,7 +60,7 @@ public class MenuItemController {
      * @throws BadRequestException newMenuItem is not valid
      */
     @PostMapping()
-    public MenuItemResponse addMenuItem(@RequestBody MenuItem newMenuItem) {
+    public MenuItemResponse addMenuItem(@RequestBody MenuItem newMenuItem) throws RestaurantException {
         String message = menuItemService.check(newMenuItem);
         if (!message.equals(Message.OK)) {
             throw new BadRequestException(message);
@@ -79,7 +80,7 @@ public class MenuItemController {
      * @throws NotFoundException   when id not exist
      */
     @PutMapping(Path.ID)
-    public MenuItemResponse updateMenuItem(@RequestBody MenuItem newMenuItem, @PathVariable Long id) {
+    public MenuItemResponse updateMenuItem(@RequestBody MenuItem newMenuItem, @PathVariable Long id) throws RestaurantException {
         String message = menuItemService.check(newMenuItem);
         if (message.equals(Message.EXISTED_NAME)) {
             throw new BadRequestException(Message.EXISTED_NAME);
@@ -88,7 +89,6 @@ public class MenuItemController {
         if (updatedMenuItem == null) {
             throw new NotFoundException(id);
         }
-        ;
         return updatedMenuItem;
     }
 
@@ -103,7 +103,7 @@ public class MenuItemController {
      * @throws BadRequestException when menu item exist in bill
      */
     @DeleteMapping(Path.ID)
-    public boolean deleteMenuItem(@PathVariable Long id) {
+    public boolean deleteMenuItem(@PathVariable Long id) throws RestaurantException {
         String message = menuItemService.delete(id);
         if (message.equals(Message.NOT_FOUND)) {
             throw new NotFoundException(id);

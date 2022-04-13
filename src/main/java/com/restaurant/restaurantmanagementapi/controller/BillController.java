@@ -5,6 +5,7 @@ import com.restaurant.restaurantmanagementapi.dto.BillItemRequest;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
 import com.restaurant.restaurantmanagementapi.exception.BadRequestException;
 import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
+import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
 import com.restaurant.restaurantmanagementapi.model.Bill;
 import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.service.BillService;
@@ -23,7 +24,7 @@ import java.util.List;
 @RequestMapping(path = Path.BILL)
 public class BillController {
     @Autowired
-    BillService billService;
+    private BillService billService;
 
     /**
      * Get information of bill by id provided. The result is BillResponse object, if id not exist throws exception
@@ -33,7 +34,7 @@ public class BillController {
      * @throws NotFoundException
      */
     @GetMapping(Path.ID)
-    BillResponse getBillById(@PathVariable Long id) {
+    public BillResponse getBillById(@PathVariable Long id) throws RestaurantException {
         BillResponse billResponse = billService.getById(id);
         if (billResponse == null) {
             throw new NotFoundException(id);
@@ -49,7 +50,7 @@ public class BillController {
      */
 
     @GetMapping()
-    List<BillResponse> getAllBills(Pageable pageable) {
+    public List<BillResponse> getAllBills(Pageable pageable) {
         return billService.getAll(pageable);
     }
 
@@ -61,7 +62,7 @@ public class BillController {
      * @throws BadRequestException when billItemRequests is not valid
      */
     @PostMapping()
-    BillResponse addBill(@RequestBody List<BillItemRequest> billItemRequests) {
+    public BillResponse addBill(@RequestBody List<BillItemRequest> billItemRequests) throws RestaurantException {
         String message = billService.checkBillItem(billItemRequests);
         if (!message.equals(Message.OK)) {
             throw new BadRequestException(message);
@@ -78,7 +79,7 @@ public class BillController {
      * @throws BadRequestException when billItemRequests is not valid
      */
     @PutMapping(Path.ID)
-    BillResponse updateBill(@RequestBody List<BillItemRequest> billItemRequests, @PathVariable Long id) {
+    public BillResponse updateBill(@RequestBody List<BillItemRequest> billItemRequests, @PathVariable Long id) throws RestaurantException {
         String message = billService.checkBillItem(billItemRequests);
         if (!message.equals(Message.OK)) {
             throw new BadRequestException(message);
@@ -99,7 +100,7 @@ public class BillController {
      * @throws NotFoundException when id not exist
      */
     @DeleteMapping(Path.ID)
-    public boolean deleteBill(@PathVariable Long id) {
+    public boolean deleteBill(@PathVariable Long id) throws RestaurantException {
         if (!billService.delete(id)) {
             throw new NotFoundException(id);
         }
@@ -118,7 +119,7 @@ public class BillController {
      * @throws NotFoundException   when id not exist
      */
     @PostMapping(Path.BILL_ITEM)
-    public BillResponse addBillItem(@PathVariable Long id, @RequestBody List<BillItemRequest> billItemRequest) {
+    public BillResponse addBillItem(@PathVariable Long id, @RequestBody List<BillItemRequest> billItemRequest) throws RestaurantException  {
         String message = billService.checkBillItem(billItemRequest);
         if (!message.equals(Message.OK)) {
             throw new BadRequestException(message);
@@ -142,7 +143,7 @@ public class BillController {
      * @throws NotFoundException   when id not exist
      */
     @DeleteMapping(Path.BILL_ITEM)
-    public BillResponse deleteBillItem(@PathVariable Long id, @RequestBody List<BillItemDeleteRequest> billItems) {
+    public BillResponse deleteBillItem(@PathVariable Long id, @RequestBody List<BillItemDeleteRequest> billItems) throws RestaurantException  {
         String message = billService.checkBillItemId(billItems);
         if (!message.equals(Message.OK)) {
             throw new BadRequestException(message);

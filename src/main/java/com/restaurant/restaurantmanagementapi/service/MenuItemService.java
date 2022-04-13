@@ -3,15 +3,17 @@ package com.restaurant.restaurantmanagementapi.service;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
 import com.restaurant.restaurantmanagementapi.mapper.MenuItemMapper;
 import com.restaurant.restaurantmanagementapi.model.MenuItem;
-import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
 import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
+import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
 import com.restaurant.restaurantmanagementapi.utils.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -22,7 +24,9 @@ public class MenuItemService {
     @Autowired
     MenuItemRepository menuItemRepository;
     @Autowired
-    BillItemRepository orderedDetailRepository;
+    BillItemRepository billItemRepository;
+    @Autowired
+    private MenuItemMapper menuItemMapper;
 
     /**
      * Check name of menu item is exited or not. The result is true if exited, false otherwise
@@ -41,7 +45,9 @@ public class MenuItemService {
      * @return MenuItemResponse object if existed, null otherwise
      */
     public MenuItemResponse getById(Long id) {
-        return menuItemRepository.findById(id).map(menuItem -> MenuItemMapper.toMenuItemResponse(menuItem)).orElse(null);
+        return menuItemRepository.findById(id).map(menuItem -> {
+            return (MenuItemResponse) menuItemMapper.entityToDTO(menuItem);
+        }).orElse(null);
     }
 
     /**
@@ -52,7 +58,7 @@ public class MenuItemService {
      */
     public MenuItemResponse add(MenuItem newMenuItem) {
         newMenuItem.setStatus(true);
-        return MenuItemMapper.toMenuItemResponse(menuItemRepository.save(newMenuItem));
+        return (MenuItemResponse) menuItemMapper.entityToDTO(menuItemRepository.save(newMenuItem));
     }
 
     /**
@@ -76,7 +82,7 @@ public class MenuItemService {
             if (newMenuItem.getPrice() > 0) {
                 existedMenuItem.setPrice(newMenuItem.getPrice());
             }
-            return MenuItemMapper.toMenuItemResponse(menuItemRepository.save(existedMenuItem));
+            return (MenuItemResponse) menuItemMapper.entityToDTO(menuItemRepository.save(existedMenuItem));
         }).orElse(null);
     }
 
@@ -104,7 +110,7 @@ public class MenuItemService {
      * @return list of MenuItemResponse
      */
     public List<MenuItemResponse> getAll(Pageable pageable) {
-        return menuItemRepository.findAll(pageable).getContent().stream().map(menuItem -> MenuItemMapper.toMenuItemResponse(menuItem)).collect(Collectors.toList());
+        return menuItemRepository.findAll(pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
     }
 
     /**
@@ -115,7 +121,7 @@ public class MenuItemService {
      * @return list of MenuItemResponse
      */
     public List<MenuItemResponse> search(String keyword, Pageable pageable) {
-        return menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem -> MenuItemMapper.toMenuItemResponse(menuItem)).collect(Collectors.toList());
+        return menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
     }
 
     /**
@@ -129,7 +135,7 @@ public class MenuItemService {
      */
     public String delete(Long id) {
         return menuItemRepository.findActiveItemById(id).map(existedMenuItem -> {
-            if (orderedDetailRepository.findByMenuItemId(id).size() != 0) {
+            if (billItemRepository.findByMenuItemId(id).size() != 0) {
                 existedMenuItem.setStatus(false);
                 menuItemRepository.save(existedMenuItem);
                 return Message.CAN_NOT_DELETE;
@@ -137,5 +143,14 @@ public class MenuItemService {
             menuItemRepository.delete(existedMenuItem);
             return Message.OK;
         }).orElse(Message.NOT_FOUND);
+    }
+
+    /**
+     * Find MenuItem by id. The result is Optional<MenuItem>
+     * @param id id of MenuItem
+     * @return Optional<MenuItem>
+     */
+    public Optional<MenuItem> findMenuItemById(Long id){
+        return menuItemRepository.findActiveItemById(id);
     }
 }

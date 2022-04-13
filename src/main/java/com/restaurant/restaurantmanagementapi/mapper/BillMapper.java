@@ -5,6 +5,8 @@ import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.model.Bill;
 import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +18,17 @@ import java.util.stream.Collectors;
  * @see Bill
  * @see BillResponse
  */
-public class BillMapper {
-    public static BillResponse toBillResponse(Bill bill) {
+@Component
+public class BillMapper<T> extends GenericMapper {
+
+    /**
+     * Convert from Bill to BillResponse
+     * @param entity Bill
+     * @return BillResponse
+     */
+    @Override
+    public Object entityToDTO(Object entity) {
+        Bill bill = (Bill) entity;
         BillResponse billResponse = new BillResponse(bill.getId(), bill.getOrderedTime(), bill.getTotal());
         if (bill.getBillItems() != null) {
             List<BillItemResponse> billItemResponses = bill.getBillItems().stream().map(billItem -> {

@@ -65,6 +65,9 @@ public class Bill {
         return items.size() == 0 ? null : items.get(0);
     }
 
+    /**
+     * Clear all bill items in list of billItems
+     */
     public void clearAllBillItem() {
         this.billItems.clear();
     }

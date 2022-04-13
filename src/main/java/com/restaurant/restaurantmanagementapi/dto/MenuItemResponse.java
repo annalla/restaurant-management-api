@@ -1,6 +1,6 @@
 package com.restaurant.restaurantmanagementapi.dto;
 
-import com.restaurant.restaurantmanagementapi.enums.Status;
+import com.restaurant.restaurantmanagementapi.enums.MenuStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +10,7 @@ import lombok.Setter;
  * The MenuItemResponse wraps fields including id (type : Long), name (type : String), description (type : String), image (type : String), note (type : String)
  * and price (type : Double) and quantity (type : Integer), status (type : Status)
  *
- * @see Status
+ * @see MenuStatus
  */
 @Getter
 @Setter
@@ -22,5 +22,5 @@ public class MenuItemResponse {
     private String image;
     private String note;
     private Double price;
-    private Status status;
+    private MenuStatus status;
 }

@@ -13,25 +13,25 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table (name ="menu_item")
+@Table(name = "menu_item")
 public class MenuItem {
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-    @Column(name="id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
-    @Column(name="name")
+    @Column(name = "name")
     @NotNull
     private String name;
-    @Column(name="description")
+    @Column(name = "description")
     private String description;
-    @Column(name="image")
+    @Column(name = "image")
     private String image;
-    @Column(name="note")
+    @Column(name = "note")
     private String note;
     @NotNull
-    @Column(name="price")
+    @Column(name = "price")
     private Double price;
-    @Column(name="status",columnDefinition = "boolean default true")
+    @Column(name = "status", columnDefinition = "boolean default true")
     private Boolean status;
 
     public MenuItem(String name, String description, String image, String note, Double price) {
@@ -40,7 +40,7 @@ public class MenuItem {
         this.image = image;
         this.note = note;
         this.price = price;
-        this.status=true;
+        this.status = true;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MenuItem {
                 ", image='" + image + '\'' +
                 ", note='" + note + '\'' +
                 ", price=" + price +
-                ", isDeleted=" + status +
+                ", status=" + status +
                 '}';
     }
 }

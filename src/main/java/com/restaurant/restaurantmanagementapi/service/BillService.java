@@ -8,7 +8,6 @@ import com.restaurant.restaurantmanagementapi.model.Bill;
 import com.restaurant.restaurantmanagementapi.model.BillItem;
 import com.restaurant.restaurantmanagementapi.model.MenuItem;
 import com.restaurant.restaurantmanagementapi.repository.BillRepository;
-import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
 import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
 import com.restaurant.restaurantmanagementapi.utils.Message;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,9 @@ public class BillService {
     @Autowired
     private BillItemRepository billItemRepository;
     @Autowired
-    private MenuItemRepository menuItemRepository;
+    private MenuItemService menuItemService;
+    @Autowired
+    private BillMapper billMapper;
 
     public BillService() {
     }
@@ -56,7 +57,7 @@ public class BillService {
                 return Message.NEGATIVE_QUANTITY;
             }
             if (billItem.getQuantity() > 0) {
-                Optional<MenuItem> menuItem = menuItemRepository.findActiveItemById(billItem.getMenuItemId());
+                Optional<MenuItem> menuItem = menuItemService.findMenuItemById(billItem.getMenuItemId());
                 if (menuItem.isEmpty()) {
                     return String.format(Message.NOT_EXISTED_MENU_ITEM, billItem.getMenuItemId());
                 }
@@ -100,7 +101,7 @@ public class BillService {
         Long billId = billRepository.save(newBill).getId();
         updateBill(billItems, billId, newBill);
         Bill response = billRepository.save(newBill);
-        return BillMapper.toBillResponse(response);
+        return (BillResponse) billMapper.entityToDTO(response);
     }
 
     /**
@@ -110,7 +111,7 @@ public class BillService {
      * @return BillResponse object if id existed, null otherwise
      */
     public BillResponse getById(Long id) {
-        return billRepository.findById(id).map(bill -> BillMapper.toBillResponse(bill)).orElse(null);
+        return billRepository.findById(id).map(bill -> (BillResponse) billMapper.entityToDTO(bill)).orElse(null);
     }
 
     /**
@@ -120,7 +121,7 @@ public class BillService {
      * @return list of BillResponse
      */
     public List<BillResponse> getAll(Pageable pageable) {
-        return billRepository.findAll(pageable).getContent().stream().map(bill -> BillMapper.toBillResponse(bill)).collect(Collectors.toList());
+        return billRepository.findAll(pageable).getContent().stream().map(bill -> (BillResponse) billMapper.entityToDTO(bill)).collect(Collectors.toList());
     }
 
     /**
@@ -135,7 +136,7 @@ public class BillService {
             deleteBillItemWithBill(bill.getId());
             bill.clearAllBillItem();
             updateBill(billItems, id, bill);
-            return BillMapper.toBillResponse(billRepository.save(bill));
+            return (BillResponse) billMapper.entityToDTO(billRepository.save(bill));
         }).orElse(null);
     }
 
@@ -149,7 +150,7 @@ public class BillService {
     private void updateBill(List<BillItemRequest> billItems, Long id, Bill bill) {
         double total = 0.0;
         for (BillItemRequest billItem : billItems) {
-            Optional<MenuItem> menuItem = menuItemRepository.findActiveItemById(billItem.getMenuItemId());
+            Optional<MenuItem> menuItem = menuItemService.findMenuItemById(billItem.getMenuItemId());
             BillItem newBillItem = new BillItem(id, billItem.getMenuItemId(), menuItem.get(), billItem.getQuantity(), menuItem.get().getPrice());
             bill.addBillItem(newBillItem);
             total += (newBillItem.getPrice() * newBillItem.getQuantity());
@@ -192,13 +193,13 @@ public class BillService {
     public BillResponse addBillItem(Long billId, List<BillItemRequest> billItemRequest) {
         return billRepository.findById(billId).map(bill -> {
             for (BillItemRequest billItem : billItemRequest) {
-                Optional<MenuItem> menuItem = menuItemRepository.findActiveItemById(billItem.getMenuItemId());
+                Optional<MenuItem> menuItem = menuItemService.findMenuItemById(billItem.getMenuItemId());
                 BillItem newBillItem = new BillItem(billId, billItem.getMenuItemId(), menuItem.get(), billItem.getQuantity(), menuItem.get().getPrice());
                 bill.addBillItem(newBillItem);
             }
             double total = calculateTotalBill(billId);
             bill.setTotal(Math.round(total * 100) / 100.0);
-            return BillMapper.toBillResponse(billRepository.save(bill));
+            return (BillResponse) billMapper.entityToDTO(billRepository.save(bill));
         }).orElse(null);
     }
 
@@ -226,7 +227,16 @@ public class BillService {
             }
             double total = calculateTotalBill(billId);
             bill.setTotal(Math.round(total * 100) / 100.0);
-            return BillMapper.toBillResponse(billRepository.save(bill));
+            return (BillResponse) billMapper.entityToDTO(billRepository.save(bill));
         }).orElse(null);
+    }
+
+    /**
+     * Find BillItem by menuItemId. The result is list of BillItem
+     * @param id id of MenuItem
+     * @return list of bill item
+     */
+    public List<BillItem> findBillItemByMenuItemId(Long id){
+        return billItemRepository.findByMenuItemId(id);
     }
 }
