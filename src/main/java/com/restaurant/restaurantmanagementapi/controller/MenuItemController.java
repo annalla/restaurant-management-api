@@ -123,7 +123,7 @@ public class MenuItemController {
      */
 
     @GetMapping(Path.SEARCH)
-    public List<MenuItemResponse> searchMenuItems(@Param("keyword") String keyword, Pageable pageable) {
-        return menuItemService.search(keyword, pageable);
+    public List<MenuItemResponse> searchMenuItems(@Param("keyword") String keyword,@Param("filter") String filter, Pageable pageable) {
+        return menuItemService.search(keyword,filter, pageable);
     }
 }

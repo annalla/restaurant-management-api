@@ -30,8 +30,12 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     MenuItem findByNameItem(@Param("name") String name);
 
     @Query(value = "SELECT * FROM menu_item m where m.status=true and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
-            countQuery = "SELECT count(*) FROM menu_item m where m.is_deleted=false and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
+            countQuery = "SELECT count(*) FROM menu_item m where m.status=true and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
             nativeQuery = true)
     Page<MenuItem> search(@Param("keyword") String keyword, Pageable pageable);
+    @Query(value = "SELECT * FROM menu_item m where m.status=?2 and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
+            countQuery = "SELECT count(*) FROM menu_item m where m.status=?2 and (lower(m.name) LIKE lower(concat('%', ?1,'%')) or lower(m.description) LIKE lower(concat('%', ?1,'%'))) ",
+            nativeQuery = true)
+    Page<MenuItem> searchWithFilter(@Param("keyword") String keyword,@Param("filter") Boolean filter, Pageable pageable);
 
 }

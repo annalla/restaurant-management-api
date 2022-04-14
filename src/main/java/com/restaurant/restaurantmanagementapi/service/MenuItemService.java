@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -120,8 +121,15 @@ public class MenuItemService {
      * @param pageable params of pagination size, page
      * @return list of MenuItemResponse
      */
-    public List<MenuItemResponse> search(String keyword, Pageable pageable) {
-        return menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
+    public List<MenuItemResponse> search(String keyword,String filter, Pageable pageable) {
+       Boolean status=null;
+        if(filter!=null && filter.toLowerCase().equals("active")){
+            status=true;
+        }
+        else  if(filter!=null && filter.toLowerCase().equals("inactive")){
+            status=false;
+        }
+        return status==null?menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList()):menuItemRepository.searchWithFilter(keyword,status, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
     }
 
     /**
