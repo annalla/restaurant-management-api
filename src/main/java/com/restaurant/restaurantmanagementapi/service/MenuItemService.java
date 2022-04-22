@@ -1,12 +1,21 @@
 package com.restaurant.restaurantmanagementapi.service;
 
+import com.restaurant.restaurantmanagementapi.config.DatabaseConfiguration;
+import com.restaurant.restaurantmanagementapi.dto.MenuItemRequest;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
+import com.restaurant.restaurantmanagementapi.exception.DatabaseErrorException;
+import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
+import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
 import com.restaurant.restaurantmanagementapi.mapper.MenuItemMapper;
 import com.restaurant.restaurantmanagementapi.model.MenuItem;
-import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
 import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
 import com.restaurant.restaurantmanagementapi.utils.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -14,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,21 +32,42 @@ import java.util.stream.Collectors;
  */
 @Component
 public class MenuItemService {
+    private static final Logger log = LoggerFactory.getLogger(MenuItemService.class);
+
     @Autowired
     MenuItemRepository menuItemRepository;
-    @Autowired
-    BillItemRepository billItemRepository;
     @Autowired
     private MenuItemMapper menuItemMapper;
 
     /**
-     * Check name of menu item is exited or not. The result is true if exited, false otherwise
+     * Check name of menu item is existed or not. The result is true if existed, false otherwise
      *
      * @param name name of menu item
      * @return true if exited, false otherwise
      */
-    public boolean checkExistedName(String name) {
-        return menuItemRepository.findByName(name).isPresent();
+    public boolean checkExistedName(String name) throws RestaurantException {
+        try {
+            return menuItemRepository.findByName(name).isPresent();
+        } catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
+
+    }
+    /**
+     * Check new name of existed menu item is existed or not. The result is true if existed, false otherwise
+     *
+     * @param name name of menu item
+     * @param id id of menu item
+     * @return true if exited, false otherwise
+     */
+    public boolean checkExistedName(String name,Long id) throws RestaurantException{
+        try {
+            return menuItemRepository.findByName(name,id).isPresent();
+        } catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
     }
 
     /**
@@ -45,73 +76,69 @@ public class MenuItemService {
      * @param id id of menu item
      * @return MenuItemResponse object if existed, null otherwise
      */
-    public MenuItemResponse getById(Long id) {
-        return menuItemRepository.findById(id).map(menuItem -> {
-            return (MenuItemResponse) menuItemMapper.entityToDTO(menuItem);
-        }).orElse(null);
+    public MenuItemResponse getById(Long id) throws RestaurantException {
+        try {
+            return menuItemRepository.findById(id).map(menuItem -> {
+                return menuItemMapper.entityToDTO(menuItem);
+            }).orElseThrow(()->new NotFoundException(String.format(Message.NOT_EXISTED_MENU_ITEM,id)));
+        }
+        catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
     }
 
     /**
      * add menu item. The result is MenuItemResponse object if success
      *
-     * @param newMenuItem information of MenuItem
+     * @param menuItem information of MenuItemRequest
      * @return MenuItemResponse object if success
      */
-    public MenuItemResponse add(MenuItem newMenuItem) {
+    public MenuItemResponse add(MenuItemRequest menuItem) throws RestaurantException  {
+        MenuItem newMenuItem=  menuItemMapper.dtoToEntity(menuItem);
         newMenuItem.setStatus(true);
-        return (MenuItemResponse) menuItemMapper.entityToDTO(menuItemRepository.save(newMenuItem));
+        try {
+            return menuItemMapper.entityToDTO(menuItemRepository.save(newMenuItem));
+        }
+        catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
     }
 
     /**
      * Update an existed MenuItem. The result is MenuItemResponse object if success, null if id not existed
      *
-     * @param newMenuItem MenuItem
+     * @param menuItem MenuItemRequest
      * @param id          id of menu item
      * @return MenuItemResponse object if success, null if id not existed
      */
-    public MenuItemResponse update(MenuItem newMenuItem, Long id) {
-        return menuItemRepository.findActiveItemById(id).map(existedMenuItem -> {
-            if (newMenuItem.getName() != null && newMenuItem.getName().length() != 0) {
-                existedMenuItem.setName(newMenuItem.getName());
-            }
-            if (newMenuItem.getDescription() != null && newMenuItem.getDescription().length() != 0) {
-                existedMenuItem.setDescription(newMenuItem.getDescription());
-            }
-            if (newMenuItem.getImage() != null && newMenuItem.getImage().length() != 0) {
-                existedMenuItem.setImage(newMenuItem.getImage());
-            }
-            if (newMenuItem.getPrice() > 0) {
-                existedMenuItem.setPrice(newMenuItem.getPrice());
-            }
-            return (MenuItemResponse) menuItemMapper.entityToDTO(menuItemRepository.save(existedMenuItem));
-        }).orElse(null);
-    }
-
-    /**
-     * Check information of MenuItem is valid or not. The result is a String
-     * Message.OK if valid, Message.EMPTY_NAME if name is empty, Message.EXISTED_NAME if existed name
-     *
-     * @param newMenuItem
-     * @return String Message.OK if valid, Message.EMPTY_NAME if name is empty, Message.EXISTED_NAME if existed name
-     */
-    public String check(MenuItem newMenuItem) {
-        if (newMenuItem.getName() == null || newMenuItem.getName().length() == 0) {
-            return Message.EMPTY_NAME;
+    public MenuItemResponse update(MenuItemRequest menuItem, Long id) throws RestaurantException {
+        MenuItem newMenuItem= menuItemMapper.dtoToEntity(menuItem);
+        newMenuItem.setId(id);
+        try {
+            MenuItem updatedMenuItem = menuItemRepository.save(newMenuItem);
+            return menuItemMapper.entityToDTO(updatedMenuItem);
         }
-        if (checkExistedName(newMenuItem.getName())) {
-            return Message.EXISTED_NAME;
+        catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
         }
-        return Message.OK;
     }
-
     /**
      * Get all menu items. The result is list of MenuItemResponse
      *
      * @param pageable params of pagination size, page
      * @return list of MenuItemResponse
      */
-    public List<MenuItemResponse> getAll(Pageable pageable) {
-        return menuItemRepository.findAll(pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
+    public List<MenuItemResponse> getAll(Pageable pageable) throws RestaurantException  {
+        try {
+            return menuItemRepository.findAll(pageable).getContent().stream().map(menuItem ->  menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
+        }
+        catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
     }
 
     /**
@@ -121,7 +148,7 @@ public class MenuItemService {
      * @param pageable params of pagination size, page
      * @return list of MenuItemResponse
      */
-    public List<MenuItemResponse> search(String keyword,String filter, Pageable pageable) {
+    public List<MenuItemResponse> search(String keyword,String filter, Pageable pageable) throws RestaurantException  {
        Boolean status=null;
         if(filter!=null && filter.toLowerCase().equals("active")){
             status=true;
@@ -129,7 +156,15 @@ public class MenuItemService {
         else  if(filter!=null && filter.toLowerCase().equals("inactive")){
             status=false;
         }
-        return status==null?menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList()):menuItemRepository.searchWithFilter(keyword,status, pageable).getContent().stream().map(menuItem -> (MenuItemResponse) menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
+        try {
+            return status==null?menuItemRepository.search(keyword, pageable).getContent().stream().map(menuItem ->
+                    menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList()):menuItemRepository.searchWithFilter(keyword,status, pageable).getContent().stream().map(menuItem -> menuItemMapper.entityToDTO(menuItem)).collect(Collectors.toList());
+        }
+        catch(DataAccessException e){
+            log.error(String.valueOf(e));
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
+
     }
 
     /**
@@ -141,16 +176,22 @@ public class MenuItemService {
      * @param id id of menu item
      * @return String Message.OK id success, Message.NOT_FOUND if id not exist, Message.CAN_NOT_DELETE if menu item existed in bill and status is set Inactive
      */
-    public String delete(Long id) {
-        return menuItemRepository.findActiveItemById(id).map(existedMenuItem -> {
-            if (billItemRepository.findByMenuItemId(id).size() != 0) {
-                existedMenuItem.setStatus(false);
-                menuItemRepository.save(existedMenuItem);
-                return Message.CAN_NOT_DELETE;
-            }
-            menuItemRepository.delete(existedMenuItem);
-            return Message.OK;
-        }).orElse(Message.NOT_FOUND);
+    public boolean delete(Long id) throws RestaurantException {
+        try {
+            menuItemRepository.deleteById(id);
+        }
+        catch(EmptyResultDataAccessException e){
+            throw new NotFoundException(String.format(Message.NOT_EXISTED_MENU_ITEM,id));
+        }
+        catch(DataIntegrityViolationException e){
+            MenuItem existedMenuItem= menuItemRepository.findActiveItemById(id).get();
+            existedMenuItem.setStatus(false);
+            return false;
+        }
+        catch(DataAccessException e){
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
+        return true;
     }
 
     /**
@@ -158,7 +199,12 @@ public class MenuItemService {
      * @param id id of MenuItem
      * @return Optional<MenuItem>
      */
-    public Optional<MenuItem> findMenuItemById(Long id){
-        return menuItemRepository.findActiveItemById(id);
+    public Optional<MenuItem> findMenuItemById(Long id) throws RestaurantException {
+        try {
+            return menuItemRepository.findActiveItemById(id);
+        }
+        catch(DataAccessException e){
+            throw new DatabaseErrorException(Message.FAILED_DATA_ACCESS);
+        }
     }
 }

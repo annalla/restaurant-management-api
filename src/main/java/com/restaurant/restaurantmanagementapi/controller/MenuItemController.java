@@ -1,10 +1,10 @@
 package com.restaurant.restaurantmanagementapi.controller;
 
+import com.restaurant.restaurantmanagementapi.dto.MenuItemRequest;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
+import com.restaurant.restaurantmanagementapi.exception.DatabaseErrorException;
 import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
-import com.restaurant.restaurantmanagementapi.model.MenuItem;
-import com.restaurant.restaurantmanagementapi.repository.MenuItemRepository;
-import com.restaurant.restaurantmanagementapi.exception.BadRequestException;
+import com.restaurant.restaurantmanagementapi.exception.InvalidRequestException;
 import com.restaurant.restaurantmanagementapi.service.MenuItemService;
 import com.restaurant.restaurantmanagementapi.utils.Message;
 import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
@@ -12,9 +12,18 @@ import com.restaurant.restaurantmanagementapi.utils.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The MenuItemController class handle routing (CRUD, search) related menu item
@@ -31,14 +40,11 @@ public class MenuItemController {
      * @param id id of menu item,
      * @return MenuItemResponse if id existed
      * @throws NotFoundException when id not exist
+     * @throws DatabaseErrorException when data access failed
      */
     @GetMapping(Path.ID)
     public MenuItemResponse getMenuItemById(@PathVariable("id") Long id) throws RestaurantException {
-        MenuItemResponse menuItemResponse = menuItemService.getById(id);
-        if (menuItemResponse == null) {
-            throw new NotFoundException(id);
-        }
-        return menuItemResponse;
+        return menuItemService.getById(id);
     }
 
     /**
@@ -48,7 +54,7 @@ public class MenuItemController {
      * @return List of MenuItemResponse
      */
     @GetMapping()
-    public List<MenuItemResponse> getMenuItems(Pageable pageable) {
+    public List<MenuItemResponse> getMenuItems(Pageable pageable) throws RestaurantException {
         return menuItemService.getAll(pageable);
     }
 
@@ -57,15 +63,36 @@ public class MenuItemController {
      *
      * @param newMenuItem information of MenuItem (name, description, image, note, price)
      * @return MenuItemResponse if success
-     * @throws BadRequestException newMenuItem is not valid
+     * @throws InvalidRequestException newMenuItem is not valid
      */
     @PostMapping()
-    public MenuItemResponse addMenuItem(@RequestBody MenuItem newMenuItem) throws RestaurantException {
-        String message = menuItemService.check(newMenuItem);
-        if (!message.equals(Message.OK)) {
-            throw new BadRequestException(message);
+    public MenuItemResponse addMenuItem(@RequestBody MenuItemRequest newMenuItem) throws RestaurantException {
+
+        Map.Entry<Boolean,String> result = isValidMenuItemRequest(newMenuItem);
+        if (result.getKey()) {
+            return menuItemService.add(newMenuItem);
         }
-        return menuItemService.add(newMenuItem);
+        throw new InvalidRequestException(result.getValue());
+    }
+
+    /**
+     * Validate MenuItem request. The result is boolean and message
+     * @param newMenuItem MenuItem
+     * @return Map.Entry<Boolean,String>  true and Message.OK,
+     * name is empty return false,Message.EMPTY_MENU_ITEM_NAME
+     * price is negative return false,Message.NEGATIVE_PRICE
+     */
+    private Map.Entry<Boolean,String> isValidMenuItemRequest(MenuItemRequest newMenuItem) throws RestaurantException {
+        if (newMenuItem.getName() == null || newMenuItem.getName().length() == 0) {
+            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.EMPTY_MENU_ITEM_NAME);
+        }
+        if(newMenuItem.getPrice()<0){
+            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.NEGATIVE_PRICE);
+        }
+        if(menuItemService.checkExistedName(newMenuItem.getName())){
+            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.EXISTED_MENU_ITEM_NAME);
+        }
+        return new AbstractMap.SimpleEntry<Boolean,String>(true, Message.OK);
     }
 
     /**
@@ -76,20 +103,19 @@ public class MenuItemController {
      * @param newMenuItem information of MenuItem (name, description, image, note, price)
      * @param id          id of MenuItem
      * @return MenuItemResponse if success
-     * @throws BadRequestException newMenuItem is not valid
+     * @throws InvalidRequestException newMenuItem is not valid
      * @throws NotFoundException   when id not exist
      */
     @PutMapping(Path.ID)
-    public MenuItemResponse updateMenuItem(@RequestBody MenuItem newMenuItem, @PathVariable Long id) throws RestaurantException {
-        String message = menuItemService.check(newMenuItem);
-        if (message.equals(Message.EXISTED_NAME)) {
-            throw new BadRequestException(Message.EXISTED_NAME);
+    public MenuItemResponse updateMenuItem(@RequestBody MenuItemRequest newMenuItem, @PathVariable Long id) throws RestaurantException {
+        Map.Entry<Boolean,String> result = isValidMenuItemRequest(newMenuItem);
+        if (result.getKey()) {
+            if(menuItemService.checkExistedName(newMenuItem.getName(),id)){
+                throw new InvalidRequestException(Message.EXISTED_MENU_ITEM_NAME);
+            }
+            return menuItemService.update(newMenuItem, id);
         }
-        MenuItemResponse updatedMenuItem = menuItemService.update(newMenuItem, id);
-        if (updatedMenuItem == null) {
-            throw new NotFoundException(id);
-        }
-        return updatedMenuItem;
+        throw new InvalidRequestException(result.getValue());
     }
 
     /**
@@ -98,20 +124,14 @@ public class MenuItemController {
      * or BadRequestException when menu item exist in bill, MenuItem status is inactive
      *
      * @param id
-     * @return true if success
+     * @return message Success if delete successfully, else Message.CAN_NOT_DELETE_MENU_ITEM when menu item exist in bill
      * @throws NotFoundException   when id not exist
-     * @throws BadRequestException when menu item exist in bill
      */
     @DeleteMapping(Path.ID)
-    public boolean deleteMenuItem(@PathVariable Long id) throws RestaurantException {
-        String message = menuItemService.delete(id);
-        if (message.equals(Message.NOT_FOUND)) {
-            throw new NotFoundException(id);
-        }
-        if (message.equals(Message.CAN_NOT_DELETE)) {
-            throw new BadRequestException(message);
-        }
-        return true;
+    public String deleteMenuItem(@PathVariable Long id) throws RestaurantException {
+        if (menuItemService.delete(id))
+            return Message.SUCCESS;
+        return Message.CAN_NOT_DELETE_MENU_ITEM;
     }
 
     /**
@@ -123,7 +143,7 @@ public class MenuItemController {
      */
 
     @GetMapping(Path.SEARCH)
-    public List<MenuItemResponse> searchMenuItems(@Param("keyword") String keyword,@Param("filter") String filter, Pageable pageable) {
+    public List<MenuItemResponse> searchMenuItems(@Param("keyword") String keyword,@Param("filter") String filter, Pageable pageable) throws RestaurantException {
         return menuItemService.search(keyword,filter, pageable);
     }
 }

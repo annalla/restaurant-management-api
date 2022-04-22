@@ -3,12 +3,8 @@ package com.restaurant.restaurantmanagementapi.mapper;
 import com.restaurant.restaurantmanagementapi.dto.BillItemResponse;
 import com.restaurant.restaurantmanagementapi.dto.BillResponse;
 import com.restaurant.restaurantmanagementapi.model.Bill;
-import com.restaurant.restaurantmanagementapi.repository.BillItemRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,23 +15,34 @@ import java.util.stream.Collectors;
  * @see BillResponse
  */
 @Component
-public class BillMapper<T> extends GenericMapper {
-
-    /**
-     * Convert from Bill to BillResponse
-     * @param entity Bill
-     * @return BillResponse
-     */
+public class BillMapper implements GenericMapper<Bill,BillResponse,Object>{
     @Override
-    public Object entityToDTO(Object entity) {
-        Bill bill = (Bill) entity;
-        BillResponse billResponse = new BillResponse(bill.getId(), bill.getOrderedTime(), bill.getTotal());
-        if (bill.getBillItems() != null) {
-            List<BillItemResponse> billItemResponses = bill.getBillItems().stream().map(billItem -> {
+    public BillResponse entityToDTO(Bill entity) {
+        BillResponse billResponse = new BillResponse(entity.getId(), entity.getOrderedTime(), entity.getTotal());
+        if (entity.getBillItems() != null) {
+            List<BillItemResponse> billItemResponses = entity.getBillItems().stream().map(billItem -> {
                 return new BillItemResponse(billItem.getId(), billItem.getMenuItem().getName(), billItem.getPrice(), billItem.getQuantity());
             }).collect(Collectors.toList());
             billResponse.setBillItems(billItemResponses);
         }
         return billResponse;
     }
+
+    @Override
+    public Bill dtoToEntity(Object dto) {
+        return null;
+    }
+
+
+//    public BillResponse entityToDTO(Bill bill) {
+//        BillResponse billResponse = new BillResponse(bill.getId(), bill.getOrderedTime(), bill.getTotal());
+//        if (bill.getBillItems() != null) {
+//            List<BillItemResponse> billItemResponses = bill.getBillItems().stream().map(billItem -> {
+//                return new BillItemResponse(billItem.getId(), billItem.getMenuItem().getName(), billItem.getPrice(), billItem.getQuantity());
+//            }).collect(Collectors.toList());
+//            billResponse.setBillItems(billItemResponses);
+//        }
+//        return billResponse;
+//    }
+
 }

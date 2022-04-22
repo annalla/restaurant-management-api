@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class RestaurantExceptionHandler {
     @ResponseBody
-    @ExceptionHandler(BadRequestException.class)
+    @ExceptionHandler(InvalidRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    String handleBadRequestException(BadRequestException ex) {
+    String handleInvalidRequestException(InvalidRequestException ex) {
         return ex.getMessage();
     }
 
@@ -22,6 +22,12 @@ public class RestaurantExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     String handleNotFoundException(NotFoundException ex) {
+        return ex.getMessage();
+    }
+    @ResponseBody
+    @ExceptionHandler(DatabaseErrorException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    String handleDatabaseErrorException(DatabaseErrorException ex) {
         return ex.getMessage();
     }
 }

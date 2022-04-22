@@ -1,9 +1,6 @@
 package com.restaurant.restaurantmanagementapi.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -15,6 +12,8 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@ToString
+@EqualsAndHashCode
 @Table(name = "bill_item")
 public class BillItem {
     @Id
@@ -47,18 +46,5 @@ public class BillItem {
         this.menuItem = menuItem;
         this.quantity = quantity;
         this.price = price;
-    }
-
-
-    @Override
-    public String toString() {
-        return "BillItem{" +
-                "id=" + id +
-                ", billId=" + billId +
-                ", menuItemId=" + menuItemId +
-                ", menuItem=" + menuItem +
-                ", quantity=" + quantity +
-                ", price=" + price +
-                '}';
     }
 }

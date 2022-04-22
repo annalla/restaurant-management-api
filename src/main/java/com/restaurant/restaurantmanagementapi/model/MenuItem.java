@@ -43,16 +43,4 @@ public class MenuItem {
         this.status = true;
     }
 
-    @Override
-    public String toString() {
-        return "MenuItem{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", image='" + image + '\'' +
-                ", note='" + note + '\'' +
-                ", price=" + price +
-                ", status=" + status +
-                '}';
-    }
 }
