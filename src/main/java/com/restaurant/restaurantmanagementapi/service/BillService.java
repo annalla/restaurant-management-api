@@ -312,6 +312,13 @@ public class BillService {
         return billItems;
     }
 
+    /**
+     * Update list billItem in bill. Te result is set of bill items after add
+     * @param billItem
+     * @param bill Bill
+     * @param billItems set of Bill Item
+     * @return set of bill items after add
+     */
     private Set<BillItem> updateBillItemInBill(BillItem billItem, Bill bill, Set<BillItem> billItems) {
         BillItem item = getExistedBillItemInBill(billItem, billItems);
         if (item == null) {

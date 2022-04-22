@@ -19,10 +19,10 @@ import static springfox.documentation.builders.PathSelectors.regex;
 @Configuration
 @EnableSwagger2
 public class AppConfiguration {
-    @Bean
-    DatabaseConfiguration databaseConfiguration() {
-        return new DatabaseConfiguration();
-    }
+    /**
+     * Define bean third-party Swagger
+     * @return Doceket
+     */
     @Bean
     public Docket docketSwagger() {
         return new Docket(DocumentationType.SWAGGER_2)

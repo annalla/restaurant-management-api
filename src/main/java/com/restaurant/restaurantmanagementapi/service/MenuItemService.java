@@ -1,8 +1,8 @@
 package com.restaurant.restaurantmanagementapi.service;
 
-import com.restaurant.restaurantmanagementapi.config.DatabaseConfiguration;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemRequest;
 import com.restaurant.restaurantmanagementapi.dto.MenuItemResponse;
+import com.restaurant.restaurantmanagementapi.enums.MenuStatus;
 import com.restaurant.restaurantmanagementapi.exception.DatabaseErrorException;
 import com.restaurant.restaurantmanagementapi.exception.NotFoundException;
 import com.restaurant.restaurantmanagementapi.exception.RestaurantException;
@@ -18,12 +18,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -150,10 +146,10 @@ public class MenuItemService {
      */
     public List<MenuItemResponse> search(String keyword,String filter, Pageable pageable) throws RestaurantException  {
        Boolean status=null;
-        if(filter!=null && filter.toLowerCase().equals("active")){
+        if(filter!=null && filter.toLowerCase().equals(MenuStatus.ACTIVE.toString().toLowerCase())){
             status=true;
         }
-        else  if(filter!=null && filter.toLowerCase().equals("inactive")){
+        else  if(filter!=null && filter.toLowerCase().equals(MenuStatus.ACTIVE.toString().toLowerCase())){
             status=false;
         }
         try {
