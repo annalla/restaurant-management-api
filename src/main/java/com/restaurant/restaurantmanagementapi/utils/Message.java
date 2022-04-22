@@ -11,7 +11,7 @@ public class Message {
     public static final String MISSING_FIELD_BILL_ITEM_ID = "Bill items miss id";
     public static final String MISSING_FIELD_BILL_ITEM_QUANTITY = "Bill items miss quantity";
     public static final String NEGATIVE_BILL_ITEM_QUANTITY = "Quantity is negative";
-    public static final String NOT_EXISTED_BILL_ITEM = "Bill item %s is not existed";
+    public static final String NOT_EXISTED_BILL_ITEM_IN_BILL = "Bill item %s is not existed in this bill";
 
 
     public static final String NOT_EXISTED_MENU_ITEM = "MenuItem %d is not existed";

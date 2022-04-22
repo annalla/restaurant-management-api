@@ -18,6 +18,8 @@ public interface BillItemRepository extends JpaRepository<BillItem, Long> {
 
     @Query(value = "SELECT * FROM bill_item b  where b.menu_item_id=:id", nativeQuery = true)
     List<BillItem> findByMenuItemId(@Param("id") Long id);
+    @Query(value = "SELECT * FROM bill_item b  where id=:id and bill_id=:billId", nativeQuery = true)
+    Optional<BillItem> findByIdAndBillId(@Param("id") Long id,@Param("billId") Long billId);
 
     @Query(value = "SELECT * FROM bill_item b where b.bill_id=:id", nativeQuery = true)
     List<BillItem> findByBillId(@Param("id") Long id);

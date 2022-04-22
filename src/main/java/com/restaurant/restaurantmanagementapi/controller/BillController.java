@@ -10,6 +10,7 @@ import com.restaurant.restaurantmanagementapi.utils.Message;
 import com.restaurant.restaurantmanagementapi.utils.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,7 @@ import java.util.Optional;
  * The BillController class handle routing (CRUD) related bill order
  */
 @RestController
+@Validated
 @RequestMapping(path = Path.BILL)
 public class BillController {
     @Autowired
@@ -65,39 +69,20 @@ public class BillController {
      * @throws InvalidRequestException when billItemRequests is not valid
      */
     @PostMapping()
-    public BillResponse addBill(@RequestBody List<BillItemRequest> billItemRequests) throws RestaurantException {
-        Map.Entry<Boolean,String> result = isValidBillItemRequest(billItemRequests);
-        if (result.getKey()) {
-            return billService.add(billItemRequests);
-        }
-        throw new InvalidRequestException(result.getValue());
+    public BillResponse addBill(@RequestBody @NotEmpty(message = "Bill item list cannot be empty.")List<@Valid BillItemRequest> billItemRequests) throws RestaurantException {
+        validateMenuItemIdInBill(billItemRequests);
+        return billService.add(billItemRequests);
     }
     /**
-     * Validate MenuItem request. The result is boolean and message
+     * Validate MenuItem request. The result throws exception InvalidRequestException when menu item id not existed
      * @param billItems List<BillItemRequest>
-     * @return Map.Entry<Boolean,String>  true and Message.OK,
-     * name is empty return false,Message.EMPTY_MENU_ITEM_NAME
-     * price is negative return false,Message.NEGATIVE_PRICE
      */
-    private Map.Entry<Boolean,String> isValidBillItemRequest( List<BillItemRequest> billItems) throws RestaurantException {
+    private void validateMenuItemIdInBill( List<BillItemRequest> billItems) throws RestaurantException {
         for (BillItemRequest billItem : billItems) {
-            if (billItem.getMenuItemId() == null && billItem.getQuantity() == null) {
-                return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.EMPTY_BILL_ITEM);
-            }
-            if( billItem.getMenuItemId() == null){
-                return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.MISSING_FIELD_BILL_ITEM_ID);
-            }
-            if(billItem.getQuantity() == null){
-                return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.MISSING_FIELD_BILL_ITEM_QUANTITY);
-            }
-            if (billItem.getQuantity() < 0) {
-                return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.NEGATIVE_BILL_ITEM_QUANTITY);
-            }
             if(!billService.isExistedMenuItemIdInBillRequest(billItem.getMenuItemId())){
-                return new AbstractMap.SimpleEntry<Boolean,String>(false, String.format( Message.NOT_EXISTED_MENU_ITEM,billItem.getMenuItemId()));
+                throw new InvalidRequestException(String.format(Message.NOT_EXISTED_MENU_ITEM,billItem.getMenuItemId()));
             }
         }
-        return new AbstractMap.SimpleEntry<Boolean,String>(true, Message.OK);
     }
     /**
      * Update a bill with id. The result is BillResponse if success, throws BadRequestException with message otherwise
@@ -108,17 +93,9 @@ public class BillController {
      * @throws InvalidRequestException when billItemRequests is not valid
      */
     @PutMapping(Path.ID)
-    public BillResponse updateBill(@RequestBody List<BillItemRequest> billItemRequests, @PathVariable Long id) throws RestaurantException {
-//        String message = billService.checkBillItem(billItemRequests);
-//        if (!message.equals(Message.OK)) {
-//            throw new InvalidRequestException(message);
-//        }
-        BillResponse updatedBill = billService.update(billItemRequests, id);
-        if (updatedBill == null) {
-            throw new NotFoundException("");
-        }
-        ;
-        return updatedBill;
+    public BillResponse updateBill(@RequestBody @NotEmpty(message = "Bill item list cannot be empty.")List<@Valid BillItemRequest> billItemRequests, @PathVariable Long id) throws RestaurantException {
+        validateMenuItemIdInBill(billItemRequests);
+        return billService.update(billItemRequests, id);
     }
 
     /**
@@ -148,16 +125,9 @@ public class BillController {
      * @throws NotFoundException   when id not exist
      */
     @PostMapping(Path.BILL_ITEM)
-    public BillResponse addBillItem(@PathVariable Long id, @RequestBody List<BillItemRequest> billItemRequest) throws RestaurantException  {
-//        String message = billService.checkBillItem(billItemRequest);
-//        if (!message.equals(Message.OK)) {
-//            throw new InvalidRequestException(message);
-//        }
-        BillResponse updatedBill = billService.addBillItem(id, billItemRequest);
-        if (updatedBill == null) {
-            throw new NotFoundException("");
-        }
-        return updatedBill;
+    public BillResponse addBillItem(@PathVariable Long id, @RequestBody @NotEmpty(message = "Bill item list cannot be empty.")List<@Valid BillItemRequest> billItemRequest) throws RestaurantException  {
+        validateMenuItemIdInBill(billItemRequest);
+        return  billService.addBillItem(id, billItemRequest);
     }
     /**
      * Update list of bill items in existed bill. The result is  BillResponse object if success,
@@ -171,16 +141,23 @@ public class BillController {
      * @throws NotFoundException   when id not exist
      */
     @PutMapping(Path.BILL_ITEM)
-    public BillResponse updateBillItem(@PathVariable Long id, @RequestBody List<BillItemUpdateRequest> billItemRequest) throws RestaurantException  {
-//        String message = billService.checkUpdateBillItemId(billItemRequest);
-//        if (!message.equals(Message.OK)) {
-//            throw new InvalidRequestException(message);
-//        }
-        BillResponse updatedBill = billService.updateBillItem(id, billItemRequest);
-        if (updatedBill == null) {
-            throw new NotFoundException("");
+    public BillResponse updateBillItem(@PathVariable Long id, @RequestBody @NotEmpty(message = "Bill item list cannot be empty.") List<@Valid BillItemUpdateRequest> billItemRequest) throws RestaurantException  {
+        validateBillItemIdInUpdateBill(billItemRequest,id);
+        return billService.updateBillItem(id, billItemRequest);
+    }
+
+    /**
+     * Validate bill item id in Bill Item list request
+     * @param billItems list bill item update request
+     * @param billId id of bill
+     * @throws RestaurantException when bill items id not exist in bill
+     */
+    private void validateBillItemIdInUpdateBill( List<BillItemUpdateRequest> billItems,Long billId) throws RestaurantException {
+        for (BillItemUpdateRequest billItem : billItems) {
+            if(!billService.isExistedBillItemIdInBillRequest(billItem.getId(),billId)){
+                throw new InvalidRequestException(String.format(Message.NOT_EXISTED_BILL_ITEM_IN_BILL,billItem.getId()));
+            }
         }
-        return updatedBill;
     }
 
     /**
@@ -195,17 +172,26 @@ public class BillController {
      * @throws NotFoundException   when id not exist
      */
     @DeleteMapping(Path.BILL_ITEM)
-    public BillResponse deleteBillItem(@PathVariable Long id, @RequestBody List<BillItemDeleteRequest> billItems) throws RestaurantException  {
-//        String message = billService.checkBillItemId(billItems);
-//        if (!message.equals(Message.OK)) {
-//            throw new InvalidRequestException(message);
-//        }
+    public BillResponse deleteBillItem(@PathVariable Long id, @RequestBody @NotEmpty(message = "Bill item delete list cannot be empty.")List<@Valid BillItemDeleteRequest> billItems) throws RestaurantException  {
+        validateBillItemIdInBill(billItems,id);
         BillResponse updatedBill = billService.deleteBillItem(id, billItems);
         if (updatedBill == null) {
             throw new NotFoundException("");
         }
         return updatedBill;
     }
-
+    /**
+     * Validate bill item id in Bill Item list request
+     * @param billItems list bill item delete request
+     * @param billId id of bill
+     * @throws RestaurantException when bill items id not exist in bill
+     */
+    private void validateBillItemIdInBill( List<BillItemDeleteRequest> billItems,Long billId) throws RestaurantException {
+        for (BillItemDeleteRequest billItem : billItems) {
+            if(!billService.isExistedBillItemIdInBillRequest(billItem.getId(),billId)){
+                throw new InvalidRequestException(String.format(Message.NOT_EXISTED_BILL_ITEM_IN_BILL,billItem.getId()));
+            }
+        }
+    }
 
 }

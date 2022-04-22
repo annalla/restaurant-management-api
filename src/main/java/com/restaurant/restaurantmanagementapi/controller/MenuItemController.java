@@ -12,6 +12,7 @@ import com.restaurant.restaurantmanagementapi.utils.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping(path = Path.MENU_ITEM)
+@Validated
 public class MenuItemController {
     @Autowired
     private MenuItemService menuItemService;
@@ -66,33 +69,11 @@ public class MenuItemController {
      * @throws InvalidRequestException newMenuItem is not valid
      */
     @PostMapping()
-    public MenuItemResponse addMenuItem(@RequestBody MenuItemRequest newMenuItem) throws RestaurantException {
-
-        Map.Entry<Boolean,String> result = isValidMenuItemRequest(newMenuItem);
-        if (result.getKey()) {
-            return menuItemService.add(newMenuItem);
-        }
-        throw new InvalidRequestException(result.getValue());
-    }
-
-    /**
-     * Validate MenuItem request. The result is boolean and message
-     * @param newMenuItem MenuItem
-     * @return Map.Entry<Boolean,String>  true and Message.OK,
-     * name is empty return false,Message.EMPTY_MENU_ITEM_NAME
-     * price is negative return false,Message.NEGATIVE_PRICE
-     */
-    private Map.Entry<Boolean,String> isValidMenuItemRequest(MenuItemRequest newMenuItem) throws RestaurantException {
-        if (newMenuItem.getName() == null || newMenuItem.getName().length() == 0) {
-            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.EMPTY_MENU_ITEM_NAME);
-        }
-        if(newMenuItem.getPrice()<0){
-            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.NEGATIVE_PRICE);
-        }
+    public MenuItemResponse addMenuItem(@Valid @RequestBody MenuItemRequest newMenuItem) throws RestaurantException {
         if(menuItemService.checkExistedName(newMenuItem.getName())){
-            return new AbstractMap.SimpleEntry<Boolean,String>(false, Message.EXISTED_MENU_ITEM_NAME);
+            throw new InvalidRequestException(Message.EXISTED_MENU_ITEM_NAME);
         }
-        return new AbstractMap.SimpleEntry<Boolean,String>(true, Message.OK);
+        return menuItemService.add(newMenuItem);
     }
 
     /**
@@ -107,15 +88,11 @@ public class MenuItemController {
      * @throws NotFoundException   when id not exist
      */
     @PutMapping(Path.ID)
-    public MenuItemResponse updateMenuItem(@RequestBody MenuItemRequest newMenuItem, @PathVariable Long id) throws RestaurantException {
-        Map.Entry<Boolean,String> result = isValidMenuItemRequest(newMenuItem);
-        if (result.getKey()) {
+    public MenuItemResponse updateMenuItem( @Valid @RequestBody MenuItemRequest newMenuItem, @PathVariable Long id) throws RestaurantException {
             if(menuItemService.checkExistedName(newMenuItem.getName(),id)){
                 throw new InvalidRequestException(Message.EXISTED_MENU_ITEM_NAME);
             }
             return menuItemService.update(newMenuItem, id);
-        }
-        throw new InvalidRequestException(result.getValue());
     }
 
     /**
